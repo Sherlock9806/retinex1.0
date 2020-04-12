@@ -212,12 +212,12 @@ Mat Msrcr::FilterGaussian(Mat src, double sigma)
     //dst = cvarrToMat(&tmp_ipl);
 }
 
-void Msrcr::FastFilter(Mat src, Mat& dst, double sigma)
+Mat Msrcr::FastFilter(Mat src, double sigma)
 {
     IplImage tmp_ipl;
     tmp_ipl = IplImage(src);
     FastFilter(&tmp_ipl, sigma);
-    dst = cvarrToMat(&tmp_ipl);
+    return cvarrToMat(&tmp_ipl);
 }
 //Mat Msrcr::FastFilter(Mat src, double sigma)
 //{

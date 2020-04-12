@@ -30,8 +30,8 @@ public:
 	void Illumination(Mat *src, double sigma);
 	Mat Illumination(Mat src, double sigma);
 	void Modified(Mat src, double sigma);
-	void Retinex(IplImage* img, double sigma, int gain, int offset);
-	void  Retinex(Mat src, double sigma,int gain = 128, int offset = 128);
+	void Decomposition(IplImage* img, double sigma, int gain, int offset);
+	void  Decomposition(Mat src, double sigma,int gain = 128, int offset = 128);
 
 };
 #endif // !_RESTORATION_H_

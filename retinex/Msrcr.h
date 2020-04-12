@@ -31,7 +31,7 @@ public:
 	//Mat FastFilter(Mat src,  double sigma);
 	//void Retinex(IplImage* img, double sigma, int gain = 128, int offset = 128);
 	//Mat Retinex(Mat src,double sigma, int gain = 128, int offset = 128);
-	void FastFilter(Mat src, Mat& dst, double sigma);
+	Mat FastFilter(Mat src, double sigma);
 	void Retinex(IplImage* img, double sigma, int gain = 128, int offset = 128);
 	void Retinex(Mat src, double sigma, int gain = 128, int offset = 128);
 	void MultiScaleRetinex(IplImage* img, vector<double> weights, vector<double> sigmas, int gain = 128, int offset = 128);

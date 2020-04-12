@@ -213,49 +213,33 @@ void Restoration::FastFilter(IplImage* img, double sigma)
         cvResize(sub_img, img, CV_INTER_LINEAR);
         cvReleaseImage(&sub_img);
     }
+
 }
 Mat Restoration::FastFilter(Mat src, double sigma)
 {
     IplImage tmp_ipl;
     tmp_ipl = IplImage(src);
-    GuassianFilter(&tmp_ipl, sigma);
+    FastFilter(&tmp_ipl, sigma);
     return cvarrToMat(&tmp_ipl);
-   
 }
 void Restoration::Illumination(Mat* img, double sigma) 
 {
     Mat fA, fB,fC;
-    //vector<Mat> channels;
-
-    //IplImage temp = IplImage(img->clone());
-    //FastFilter(&temp, sigma);//temp = Fxy
     Mat temp = img->clone();
-
-    temp = FastFilter(temp, sigma);
-   /* temp = GuassianFilter(temp, sigma);*/
-  
-    
-
+    //temp = FastFilter(temp, sigma);
+    //14:13改
+    FastFilter(temp, sigma);
     temp.convertTo(fA, CV_32FC3);
- 
+  
     img->convertTo(fB, CV_32FC3);
-    
     absdiff(fA, fB, fC); //fC是
-    ////分离通道
-    //split ( fC, channels);
-    //归一化 
- 
     fC.convertTo(fC, CV_32FC3, 1 / 255.0);  //wxy
-  /*  fC = fC.mul(*img) + (1 - fC).mul(temp);*/
- 
     fC = fC.mul(fB) + fA - fC.mul(fA);
-    //fC.convertTo(*img, CV_8UC3);
-  /*  cout << fC << endl;*/
 
     fC.convertTo(*img, CV_8UC3);
 
- 
- /*   cvConvertScale(&fC, img);*/
+
+
 }
 Mat Restoration::Illumination(Mat src, double sigma)
 {
@@ -264,32 +248,7 @@ Mat Restoration::Illumination(Mat src, double sigma)
     return temp;
 }
 
-//void Restoration::Modified(Mat img,double sigma)
-//{
-//
-//    
-//    Mat fA = img.clone();//fA = img
-//    Mat fB;
-//    Mat fC = img.clone();
-//    
-//    fA.convertTo(fA, CV_32FC3);
-//    log(fA, fB);//fB = log fA
-//    //Illumination(&fC, sigma); //fC 为光照
-//    //GaussianFilter(&fC, sigma);
-//    fC.convertTo(fC, CV_32FC3);
-//    log(fC, fC);//fC = log fC
-//    fC = fB - fC;
-//    IplImage temp = IplImage(fC);
-//    cvConvertScale(&temp,&temp, 128, 128);
-//    cout << "********************" << endl;
-//    Mat dst = cvarrToMat(&temp);
-//    dst.convertTo(dst, CV_8UC3);
-//    imshow("dst", dst);
-//    waitKey(0);
-//    
-// 
-//}
-void Restoration::Retinex(IplImage* img, double sigma, int gain, int offset)
+void Restoration::Decomposition(IplImage* img, double sigma, int gain, int offset)
 {
     IplImage* A, * fA, * fB, * fC;
 
@@ -307,8 +266,10 @@ void Restoration::Retinex(IplImage* img, double sigma, int gain, int offset)
     // Compute log of blured image
     // 计算滤波后模糊图像的对数图像
     A = cvCloneImage(img);
-    GuassianFilter(cvarrToMat(A), sigma);
-   
+
+    Illumination(&cvarrToMat(A), sigma);
+    //FastFilter(A, sigma);
+
     cvConvert(A, fA); // fA = A 
     cvLog(fA, fC);        //fC = log(A)
 
@@ -326,15 +287,13 @@ void Restoration::Retinex(IplImage* img, double sigma, int gain, int offset)
     cvReleaseImage(&fA);
     cvReleaseImage(&fB);
     cvReleaseImage(&fC);
-    imshow("img", cvarrToMat(img));
-    waitKey(0);
 
 
 }
-void  Restoration::Retinex(Mat src,double sigma, int gain, int offset)
+void  Restoration::Decomposition(Mat src,double sigma, int gain, int offset)
 {
     IplImage tmp_ipl;
     tmp_ipl = IplImage(src);
-    Retinex(&tmp_ipl, sigma, gain, offset);
+    Decomposition(&tmp_ipl, sigma, gain, offset);
 
 }
