@@ -155,6 +155,7 @@
     <ClCompile Include="Msrcr.cpp" />
     <ClCompile Include="restoration.cpp" />
     <ClCompile Include="retinex.cpp" />
+    <ClCompile Include="test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Msrcr.h" />
