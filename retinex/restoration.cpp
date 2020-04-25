@@ -1,6 +1,24 @@
 #include"restoration.h"
 #include<vector>
 
+Mat getMax(Mat src)
+{
+    int row = src.rows;
+    int col = src.cols;
+    Mat dst(row, col, CV_8UC1);
+    for (int i = 0; i < row; i++)
+    {
+        for (int j = 0; j < col; j++)
+        {
+            int b = src.at<Vec3b>(i, j)[0];
+            int g = src.at<Vec3b>(i, j)[1];
+            int r = src.at<Vec3b>(i, j)[2];
+            int maxx = max(r, max(g, b));
+            dst.at<uchar>(i, j) = maxx;
+        }
+    }
+    return dst;
+}
 Mat RGB2HSV(Mat src) {
     int row = src.rows;
     int col = src.cols;

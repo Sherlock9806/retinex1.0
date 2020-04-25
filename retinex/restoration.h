@@ -11,6 +11,7 @@ using namespace cv;
 using namespace std;
 Mat RGB2HSV(Mat src);
 Mat HSV2RGB(Mat src);
+Mat getMax(Mat src);
 class Restoration {
 private:
 #define INT_PREC 1024.0
