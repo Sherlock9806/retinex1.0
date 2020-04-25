@@ -80,11 +80,11 @@ Mat HSV2RGB(Mat src) {
     return dst;
 } 
 
-float Restoration::GetPixel(IplImage *img,int steps ,int channels,int num)//steps 行 channels 列
+uchar Restoration::GetPixel(IplImage *img,int steps ,int channels,int num)//steps 行 channels 列
 {
     return img->imageData[(img->widthStep * steps) + (img->nChannels * channels) + num];
 }
-void Restoration::ChangePixel(IplImage* img, int steps,  int channels, int num ,char ch) {
+void Restoration::ChangePixel(IplImage* img, int steps,  int channels, int num ,float ch) {
     img->imageData[(img->widthStep * steps) + (img->nChannels * channels) + num] = ch;
 }
 vector<double> Restoration::CreateKernel(double sigma)
@@ -162,7 +162,7 @@ void Restoration::GuassianFilter(IplImage* img, double sigma)
 
     vector<int> kernel;
     IplImage* temp;
-    int v1, v2, v3;
+    float v1, v2, v3;
     // Reject unreasonable demands
     // 设置上限
     if (sigma > 300) sigma = 300;
@@ -205,11 +205,9 @@ void Restoration::GuassianFilter(IplImage* img, double sigma)
             ChangePixel(temp, j, i, 1, (char)int2smallint(v2));
             ChangePixel(temp, j, i, 2, (char)int2smallint(v3));
       
-
+             
         }
     }   
-    imshow("mid", cvarrToMat(temp));
-    waitKey(0);
 
    
 

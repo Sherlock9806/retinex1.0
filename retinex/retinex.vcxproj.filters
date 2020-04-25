@@ -18,20 +18,11 @@
     <ClCompile Include="retinex.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Msrcr.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="restoration.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="test.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Msrcr.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="restoration.h">
       <Filter>头文件</Filter>
     </ClInclude>

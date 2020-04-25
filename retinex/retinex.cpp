@@ -19,6 +19,7 @@ void show()
 	Restoration res;
 	Mat Guassian = res.FastFilter(V, 10);
 	imshow("Guassian", Guassian);
+	waitKey(0);
 	vector <Mat> v;
 	v.push_back(H);
 	v.push_back(S);
@@ -27,17 +28,9 @@ void show()
 	merge(v, merge_);
 	Mat dst = HSV2RGB(merge_);
 
-
-	imshow("dst", V);
-	imshow("src", src);
-	waitKey(0);
-	
-
 }
 int main()
 {
-	
-
 	show();
 	
 

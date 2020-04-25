@@ -21,8 +21,8 @@ private:
 	inline int int2bigint(int x) { return (x << INT_PREC_BITS); }
 public:
 
-	void ChangePixel(IplImage* img, int, int, int channels,char ch);
-	float GetPixel(IplImage *img, int steps, int channels, int num);
+	void ChangePixel(IplImage* img, int, int, int channels,float ch);
+	uchar GetPixel(IplImage *img, int steps, int channels, int num);
 	vector<double> CreateKernel(double sigma);
 	vector<int> CreateFastKernel(double sigma);
 	void GuassianFilter(IplImage* img, double sigma);

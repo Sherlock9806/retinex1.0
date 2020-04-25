@@ -152,13 +152,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Msrcr.cpp" />
     <ClCompile Include="restoration.cpp" />
     <ClCompile Include="retinex.cpp" />
-    <ClCompile Include="test.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Msrcr.h" />
     <ClInclude Include="restoration.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
