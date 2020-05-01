@@ -32,9 +32,9 @@ public:
 	Mat FastFilter(Mat src, double sigma);
 	void Illumination(Mat *src, double sigma);
 	Mat Illumination(Mat src, double sigma);
-	void Modified(Mat src, double sigma);
-	void Decomposition(IplImage* img, double sigma, int gain, int offset);
-	void  Decomposition(Mat src, double sigma,int gain = 128, int offset = 128);
+	/*void Decomposition(IplImage* img, double sigma, int gain, int offset);
+	void  Decomposition(Mat src, double sigma,int gain = 128, int offset = 128);*/
+	Mat Decomposition(Mat src, Mat dst);
 	
 };
 #endif // !_RESTORATION_H_

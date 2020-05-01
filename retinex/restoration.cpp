@@ -319,8 +319,10 @@ void Restoration::Illumination(Mat* img, double sigma)
     absdiff(fA, fB, fC); //fC是
     fC.convertTo(fC, CV_32FC3, 1 / 255.0);  //wxy
     fC = fC.mul(fB) + fA - fC.mul(fA);
+   
 
-    fC.convertTo(*img, CV_8UC3);
+    //fC.convertTo(*img, CV_8UC3);
+    fC.convertTo(*img, CV_32FC3);
 
 
 
@@ -332,52 +334,74 @@ Mat Restoration::Illumination(Mat src, double sigma)
     return temp;
 }
 
-void Restoration::Decomposition(IplImage* img, double sigma, int gain, int offset)
+//void Restoration::Decomposition(IplImage* img, double sigma, int gain, int offset)
+//{
+//    IplImage* A, * fA, * fB, * fC;
+//
+//    // Initialize temp images
+//    // 初始化缓存图像
+//    fA = cvCreateImage(cvSize(img->width, img->height), IPL_DEPTH_32F, img->nChannels);
+//    fB = cvCreateImage(cvSize(img->width, img->height), IPL_DEPTH_32F, img->nChannels);
+//    fC = cvCreateImage(cvSize(img->width, img->height), IPL_DEPTH_32F, img->nChannels);
+//
+//    // Compute log image
+//    // 计算对数图像
+//    cvConvert(img, fA); //fA = img
+//    cvLog(fA, fB);      //fB = log(fA)
+//
+//    // Compute log of blured image
+//    // 计算滤波后模糊图像的对数图像
+//    A = cvCloneImage(img);
+//
+//    Illumination(&cvarrToMat(A), sigma);
+//    //FastFilter(A, sigma);
+//
+//    cvConvert(A, fA); // fA = A 
+//    cvLog(fA, fC);        //fC = log(A)
+//
+//    // Compute difference
+//    // 计算两图像之差
+//    cvSub(fB, fC, fA);  //fA = fB - fC
+//
+//    // Restore
+//    // 恢复图像
+//    cvConvertScale(fA, img, gain, offset);
+//
+//    // Release temp images
+//    // 释放缓存图像
+//    cvReleaseImage(&A);
+//    cvReleaseImage(&fA);
+//    cvReleaseImage(&fB);
+//    cvReleaseImage(&fC);
+//
+//
+//}
+//void  Restoration::Decomposition(Mat src,double sigma, int gain, int offset)
+//{
+//    IplImage tmp_ipl;
+//    tmp_ipl = IplImage(src);
+//    Decomposition(&tmp_ipl, sigma, gain, offset);
+//
+//}
+Mat Restoration::Decomposition(Mat src, Mat dst)
 {
-    IplImage* A, * fA, * fB, * fC;
+    int row = src.rows;
+    int col = src.cols;
+    Mat temp = Mat(row, col, CV_32FC3);
+    cout << "right" << endl;
+    for (int i = 0; i < row; i++) {
+        for (int j = 0; j < col; j++) {
+            float b = (float)src.at<Vec3b>(i, j)[0] / (float)dst.at<uchar>(i, j);
+            float g = src.at<Vec3b>(i, j)[1] / dst.at<uchar>(i, j);
+            float r = src.at<Vec3b>(i, j)[2] / dst.at<uchar>(i, j);
+            temp.at<Vec3f>(i, j)[0] = b;
+            temp.at<Vec3f>(i, j)[1] = g;
+            temp.at<Vec3f>(i, j)[2] = r;
 
-    // Initialize temp images
-    // 初始化缓存图像
-    fA = cvCreateImage(cvSize(img->width, img->height), IPL_DEPTH_32F, img->nChannels);
-    fB = cvCreateImage(cvSize(img->width, img->height), IPL_DEPTH_32F, img->nChannels);
-    fC = cvCreateImage(cvSize(img->width, img->height), IPL_DEPTH_32F, img->nChannels);
+        }
+    }
+    temp.convertTo(temp, CV_8UC3, 255);
+    return temp;
 
-    // Compute log image
-    // 计算对数图像
-    cvConvert(img, fA); //fA = img
-    cvLog(fA, fB);      //fB = log(fA)
-
-    // Compute log of blured image
-    // 计算滤波后模糊图像的对数图像
-    A = cvCloneImage(img);
-
-    Illumination(&cvarrToMat(A), sigma);
-    //FastFilter(A, sigma);
-
-    cvConvert(A, fA); // fA = A 
-    cvLog(fA, fC);        //fC = log(A)
-
-    // Compute difference
-    // 计算两图像之差
-    cvSub(fB, fC, fA);  //fA = fB - fC
-
-    // Restore
-    // 恢复图像
-    cvConvertScale(fA, img, gain, offset);
-
-    // Release temp images
-    // 释放缓存图像
-    cvReleaseImage(&A);
-    cvReleaseImage(&fA);
-    cvReleaseImage(&fB);
-    cvReleaseImage(&fC);
-
-
-}
-void  Restoration::Decomposition(Mat src,double sigma, int gain, int offset)
-{
-    IplImage tmp_ipl;
-    tmp_ipl = IplImage(src);
-    Decomposition(&tmp_ipl, sigma, gain, offset);
 
 }
