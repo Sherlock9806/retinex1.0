@@ -35,6 +35,10 @@ public:
 	/*void Decomposition(IplImage* img, double sigma, int gain, int offset);
 	void  Decomposition(Mat src, double sigma,int gain = 128, int offset = 128);*/
 	Mat Decomposition(Mat src, Mat dst);
+	Mat GammaCorrection(Mat src);
+	Mat e_hist(Mat src);
+	Mat merge_(Mat src, double sigma);
+	Mat merge_2(Mat src, double sigma);
 	
 };
 #endif // !_RESTORATION_H_

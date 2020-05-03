@@ -312,96 +312,245 @@ void Restoration::Illumination(Mat* img, double sigma)
     Mat temp = img->clone();
     //temp = FastFilter(temp, sigma);
     //14:13改
-    FastFilter(temp, sigma);
-    temp.convertTo(fA, CV_32FC3);
+    FastFilter(temp, sigma);    //temp 是FXY
+    temp.convertTo(fA, CV_32FC1);  
   
-    img->convertTo(fB, CV_32FC3);
-    absdiff(fA, fB, fC); //fC是
-    fC.convertTo(fC, CV_32FC3, 1 / 255.0);  //wxy
+    img->convertTo(fB, CV_32FC1);//fB 是原图
+    absdiff(fA, fB, fC); //fC是 Dxy
+    fC.convertTo(fC, CV_8UC1);
+    FastFilter(fC, sigma); //wxy = dxy *gxy
+
+    Scalar ss = sum(fC);
+    double normalize = 1.0 / ss[0];
+    fC.convertTo(fC, CV_32FC1,normalize );  //wxy
     fC = fC.mul(fB) + fA - fC.mul(fA);
    
 
-    //fC.convertTo(*img, CV_8UC3);
-    fC.convertTo(*img, CV_32FC3);
-
-
-
+    fC.convertTo(*img, CV_32FC1);
+    
 }
 Mat Restoration::Illumination(Mat src, double sigma)
 {
     Mat temp = src.clone();
     Illumination(&temp,sigma);
     return temp;
-}
-
-//void Restoration::Decomposition(IplImage* img, double sigma, int gain, int offset)
-//{
-//    IplImage* A, * fA, * fB, * fC;
-//
-//    // Initialize temp images
-//    // 初始化缓存图像
-//    fA = cvCreateImage(cvSize(img->width, img->height), IPL_DEPTH_32F, img->nChannels);
-//    fB = cvCreateImage(cvSize(img->width, img->height), IPL_DEPTH_32F, img->nChannels);
-//    fC = cvCreateImage(cvSize(img->width, img->height), IPL_DEPTH_32F, img->nChannels);
-//
-//    // Compute log image
-//    // 计算对数图像
-//    cvConvert(img, fA); //fA = img
-//    cvLog(fA, fB);      //fB = log(fA)
-//
-//    // Compute log of blured image
-//    // 计算滤波后模糊图像的对数图像
-//    A = cvCloneImage(img);
-//
-//    Illumination(&cvarrToMat(A), sigma);
-//    //FastFilter(A, sigma);
-//
-//    cvConvert(A, fA); // fA = A 
-//    cvLog(fA, fC);        //fC = log(A)
-//
-//    // Compute difference
-//    // 计算两图像之差
-//    cvSub(fB, fC, fA);  //fA = fB - fC
-//
-//    // Restore
-//    // 恢复图像
-//    cvConvertScale(fA, img, gain, offset);
-//
-//    // Release temp images
-//    // 释放缓存图像
-//    cvReleaseImage(&A);
-//    cvReleaseImage(&fA);
-//    cvReleaseImage(&fB);
-//    cvReleaseImage(&fC);
-//
-//
-//}
-//void  Restoration::Decomposition(Mat src,double sigma, int gain, int offset)
-//{
-//    IplImage tmp_ipl;
-//    tmp_ipl = IplImage(src);
-//    Decomposition(&tmp_ipl, sigma, gain, offset);
-//
-//}
+}//返回的是CV_32FC1
 Mat Restoration::Decomposition(Mat src, Mat dst)
 {
     int row = src.rows;
     int col = src.cols;
     Mat temp = Mat(row, col, CV_32FC3);
-    cout << "right" << endl;
+    //cout << "right" << endl;
     for (int i = 0; i < row; i++) {
         for (int j = 0; j < col; j++) {
-            float b = (float)src.at<Vec3b>(i, j)[0] / (float)dst.at<uchar>(i, j);
-            float g = src.at<Vec3b>(i, j)[1] / dst.at<uchar>(i, j);
-            float r = src.at<Vec3b>(i, j)[2] / dst.at<uchar>(i, j);
+            float b = (float)src.at<Vec3b>(i, j)[0] / (float)dst.at<float>(i, j);
+            float g = (float)src.at<Vec3b>(i, j)[1] / (float)dst.at<float>(i, j);
+            float r = (float)src.at<Vec3b>(i, j)[2] / (float)dst.at<float>(i, j);
             temp.at<Vec3f>(i, j)[0] = b;
             temp.at<Vec3f>(i, j)[1] = g;
             temp.at<Vec3f>(i, j)[2] = r;
 
         }
     }
-    temp.convertTo(temp, CV_8UC3, 255);
+    //temp.convertTo(temp, CV_8UC3, 255);
     return temp;
 
 
+}
+Mat Restoration::GammaCorrection(Mat src)
+{
+    int row = src.rows;
+    int col = src.cols;
+    float average = mean(src)[0];// m
+
+    Mat out(row, col, CV_32FC1);
+    for (int i = 0; i < row; i++) {
+        for (int j = 0; j < col; j++) {
+            float gamma = (src.at<float>(i, j) + average + 1) / (1 + 1 + average);
+            out.at<float>(i, j) = powf(src.at<float>(i, j), gamma);
+        }
+    }
+
+    return out;
+}
+Mat Restoration::e_hist(Mat src)
+{
+    int gray[256] = { 0 };  //记录每个灰度级别下的像素个数
+    double gray_prob[256] = { 0 };  //记录灰度分布密度
+    double pdf_MA[256] = { 0 };
+    //double pdf_U[256] = { 1/256};
+    double pdf_final[256] = { 0 };
+    double pdf_mod[256] = { 0 };
+    double gray_distribution[256] = { 0 };  //记录累计密度
+    int gray_equal[256] = { 0 };  //均衡化后的灰度值
+    double l = 1.0 / 256;
+    double w = 0;
+    int col = src.cols;
+    int row = src.rows;
+    int gray_sum = col * row;
+    Mat output(row, col, CV_8UC1);
+    //灰度个数统计
+    for (int i = 0; i < src.rows; i++)
+    {
+        for (int j = 0; j < src.cols; j++)
+        {
+            int value = (int)src.at<uchar>(i, j);
+            gray[value]++;
+        }
+    }
+    //计算概率密度
+    for (int i = 0; i < 256; i++)
+    {
+
+        gray_prob[i] = ((double)gray[i] / gray_sum);
+
+    }
+
+    int h = 4;  //filter size of the moving average 
+    for (int i = 0; i < 256; i++)  //pdf ma
+    {
+        double temp = 0;
+        if (i + h >= 256)
+        {
+            h = 256 - i;
+        }
+        for (int j = 0; j < h; j++)
+        {
+
+            temp += gray_prob[j + i];
+        }
+        pdf_MA[i] = temp / h;
+
+
+    }
+
+    for (int i = 0; i < 256; i++)//pdf mod
+    {
+        if (pdf_MA[i] < l)
+            pdf_mod[i] = pdf_MA[i];
+        else pdf_mod[i] = l;
+        //cout << pdf_mod[i] << endl;
+
+    }
+
+
+
+    for (int i = 0; i < 256; i++)//w
+    {
+        w += l - pdf_mod[i];
+
+    }
+
+
+    for (int i = 0; i < 256; i++)//pdf_final
+    {
+        pdf_final[i] = w * gray_prob[i] + (1 - w) * l;
+
+    }
+
+
+    gray_distribution[0] = gray_prob[0];
+    for (int i = 1; i < 256; i++)
+    {
+        gray_distribution[i] = gray_distribution[i - 1] + pdf_final[i];
+
+    }
+
+    //重新计算均衡化后的灰度值，四舍五入。参考公式：(N-1)*T+0.5
+
+    for (int i = 0; i < 256; i++)
+    {
+        gray_equal[i] = (255 * gray_distribution[i] + 0.5);
+
+
+    }
+    //直方图均衡化,更新原图每个点的像素值
+
+    for (int i = 0; i < row; i++)
+    {
+        for (int j = 0; j < col; j++)
+        {
+            output.at<uchar>(i, j) = gray_equal[(int)src.at<uchar>(i, j)];
+        }
+    }
+
+
+    return output;
+}
+
+Mat Restoration::merge_(Mat src,double sigma)
+{
+    Mat now = RGB2HSV(src);
+    vector<Mat> v_channel;
+    split(now, v_channel);
+    Mat H = v_channel.at(0);
+    Mat S = v_channel.at(1);
+    Mat V = v_channel.at(2);
+    Restoration res;
+    V.convertTo(V, CV_8UC1, 255);
+    Mat dst(V.rows, V.cols, CV_32FC1);
+    dst = res.Illumination(V, sigma);
+    for (int i = 0; i < dst.rows; i++) {
+        for (int j = 0; j < dst.cols; j++) {
+            dst.at<float>(i, j) = dst.at<float>(i, j) / 255;
+        }
+    }
+    dst = res.GammaCorrection(dst);
+    dst.convertTo(dst, CV_8UC1, 255);
+
+    Mat hist = res.e_hist(dst);
+    hist.convertTo(hist, CV_32FC1, 1.0 / 255);
+
+    vector <Mat> v;
+    v.push_back(H);
+    v.push_back(S);
+    v.push_back(hist);
+    Mat merge_;
+    merge(v, merge_);
+    Mat result = HSV2RGB(merge_);
+
+    return result;
+}
+
+Mat Restoration::merge_2(Mat src, double sigma)
+{
+    Restoration res;
+    Mat now = RGB2HSV(src);
+    vector<Mat> v_channel;
+    split(now, v_channel);
+    Mat H = v_channel.at(0);
+    Mat S = v_channel.at(1);
+    Mat V = v_channel.at(2);
+    Mat value = v_channel.at(2);
+    V.convertTo(V, CV_8UC1, 255);
+    Mat lol = res.Illumination(V, sigma);
+    //lol.convertTo(lol, CV_8UC1);
+    Mat Decom = res.Decomposition(src, lol);//RGB分解
+    value.convertTo(V, CV_8UC1, 255);
+    Mat dst(V.rows, V.cols, CV_32FC1);
+    dst = res.Illumination(V, 180);
+    for (int i = 0; i < dst.rows; i++) {
+        for (int j = 0; j < dst.cols; j++) {
+            dst.at<float>(i, j) = dst.at<float>(i, j) / 255;
+        }
+    }
+    dst = res.GammaCorrection(dst);
+    dst.convertTo(dst, CV_8UC1, 255);
+    Mat hist = res.e_hist(dst);
+    Mat output(src.rows, src.cols, CV_32FC3);
+    for (int i = 0; i < output.rows; i++) {
+        for (int j = 0; j < output.cols; j++) {
+
+            output.at<Vec3f>(i, j)[0] = (Decom.at<Vec3f>(i, j)[0] * hist.at<uchar>(i, j));
+            output.at<Vec3f>(i, j)[1] = (Decom.at<Vec3f>(i, j)[1] * hist.at<uchar>(i, j));
+            output.at<Vec3f>(i, j)[2] = (Decom.at<Vec3f>(i, j)[2] * hist.at<uchar>(i, j));
+            //output.at<Vec3b>(i, j)[0] = Decom.at<Vec3f>(i,j)[0]*hist.at<float>(i,j);
+        }
+    }
+    output.convertTo(output, CV_8UC3);
+
+
+
+
+    return output;
 }
