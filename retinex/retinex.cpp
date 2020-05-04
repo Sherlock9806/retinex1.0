@@ -37,7 +37,7 @@ void enhance(string filePath)
 	for (vector<string>::iterator it = files.begin(); it != files.end(); it++)
 	{
 		Mat src = imread(*it);
-		Mat dst = res.merge_2(src, 300);
+		Mat dst = res.merge_2(src, 15);
 		int length = (*it).length();
 		string newPath = (*it).insert(length - 4, "_new");
 		imwrite(newPath, dst);
@@ -46,35 +46,50 @@ void enhance(string filePath)
 }
 int main()
 {	
-	Mat src = imread("D://Game//images//caps.bmp");
+	string filePath = "D://Game//images";
+	enhance(filePath);
 	
+	//Mat dst = res.GammaCorrection(V);
+	
+	//dst.convertTo(dst, CV_8UC1,255);
+
+
+	waitKey(0);
+
+	return 0;
+
+	/*
+	Mat now = RGB2HSV(src);
+	vector<Mat> v_channel;
+	split(now, v_channel);
+	Mat H = v_channel.at(0);
+	Mat S = v_channel.at(1);
+	Mat V = v_channel.at(2);
 
 	Restoration res;
-	Mat dst = res.merge_2(src,200);
+	
+	V.convertTo(V, CV_8UC1, 255);
+	Mat ill = res.Illumination(V,10);//ILL FMXY
+	Mat rgb = res.Decomposition(src, ill);
+	Mat Gamma(ill.rows, ill.cols, CV_32FC1);
+	ill.convertTo(Gamma, CV_32FC1, 1.0 / 255);
+	Mat dst = res.GammaCorrection(Gamma);
+	dst.convertTo(dst, CV_8UC1, 255);
+	Mat hist = res.e_hist(dst);
+	Mat output(src.rows, src.cols, CV_32FC3);
+	for (int i = 0; i < output.rows; i++) {
+		for (int j = 0; j < output.cols; j++) {
 
-
-	imshow("dst",dst);
+			output.at<Vec3f>(i, j)[0] = (rgb.at<Vec3f>(i, j)[0] * hist.at<uchar>(i, j));
+			output.at<Vec3f>(i, j)[1] = (rgb.at<Vec3f>(i, j)[1] * hist.at<uchar>(i, j));
+			output.at<Vec3f>(i, j)[2] = (rgb.at<Vec3f>(i, j)[2] * hist.at<uchar>(i, j));
+			//output.at<Vec3b>(i, j)[0] = Decom.at<Vec3f>(i,j)[0]*hist.at<float>(i,j);
+		}
+	}
+	output.convertTo(output, CV_8UC3);
+	imshow(" ", output);
 	waitKey(0);
-	// dst = res.merge_2(src, 180);
-	//Mat now = RGB2HSV(src);
-	//vector<Mat> v_channel;
-	//split(now, v_channel);
-	//Mat H = v_channel.at(0);
-	//Mat S = v_channel.at(1);
-	//Mat V = v_channel.at(2);
-	//Mat value = v_channel.at(2);
-	//value.convertTo(value, CV_8UC1, 255);
-
-	//Mat dst =res.Illumination(value, 20);
-	//Mat temp = res.Decomposition(src, dst);
-	//cout << dst;
-
-
-
-	
-
-	
-	return 0;      
+	*/
 
 }
 

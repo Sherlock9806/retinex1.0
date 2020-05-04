@@ -39,6 +39,6 @@ public:
 	Mat e_hist(Mat src);
 	Mat merge_(Mat src, double sigma);
 	Mat merge_2(Mat src, double sigma);
-	
+
 };
 #endif // !_RESTORATION_H_

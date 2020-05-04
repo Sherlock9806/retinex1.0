@@ -306,35 +306,46 @@ Mat Restoration::FastFilter(Mat src, double sigma)
     FastFilter(&tmp_ipl, sigma);
     return cvarrToMat(&tmp_ipl);
 }
+
 void Restoration::Illumination(Mat* img, double sigma) 
 {
     Mat fA, fB,fC;
     Mat temp = img->clone();
-    //temp = FastFilter(temp, sigma);
-    //14:13改
+ 
+   
     FastFilter(temp, sigma);    //temp 是FXY
+    
     temp.convertTo(fA, CV_32FC1);  
   
     img->convertTo(fB, CV_32FC1);//fB 是原图
     absdiff(fA, fB, fC); //fC是 Dxy
+    
     fC.convertTo(fC, CV_8UC1);
     FastFilter(fC, sigma); //wxy = dxy *gxy
+    
 
     Scalar ss = sum(fC);
     double normalize = 1.0 / ss[0];
+   
     fC.convertTo(fC, CV_32FC1,normalize );  //wxy
-    fC = fC.mul(fB) + fA - fC.mul(fA);
+    
+    fC = fC.mul(fB) + (1 - fC).mul(fA);
+    
    
 
     fC.convertTo(*img, CV_32FC1);
     
+    
 }
+
 Mat Restoration::Illumination(Mat src, double sigma)
 {
     Mat temp = src.clone();
     Illumination(&temp,sigma);
+   
     return temp;
 }//返回的是CV_32FC1
+
 Mat Restoration::Decomposition(Mat src, Mat dst)
 {
     int row = src.rows;
@@ -367,8 +378,7 @@ Mat Restoration::GammaCorrection(Mat src)
     for (int i = 0; i < row; i++) {
         for (int j = 0; j < col; j++) {
             float gamma = (src.at<float>(i, j) + average + 1) / (1 + 1 + average);
-            out.at<float>(i, j) = powf(src.at<float>(i, j), gamma);
-        }
+            out.at<float>(i, j) = powf(src.at<float>(i, j), gamma);        }
     }
 
     return out;
@@ -521,33 +531,29 @@ Mat Restoration::merge_2(Mat src, double sigma)
     Mat H = v_channel.at(0);
     Mat S = v_channel.at(1);
     Mat V = v_channel.at(2);
-    Mat value = v_channel.at(2);
+
+ 
+
     V.convertTo(V, CV_8UC1, 255);
-    Mat lol = res.Illumination(V, sigma);
-    //lol.convertTo(lol, CV_8UC1);
-    Mat Decom = res.Decomposition(src, lol);//RGB分解
-    value.convertTo(V, CV_8UC1, 255);
-    Mat dst(V.rows, V.cols, CV_32FC1);
-    dst = res.Illumination(V, 180);
-    for (int i = 0; i < dst.rows; i++) {
-        for (int j = 0; j < dst.cols; j++) {
-            dst.at<float>(i, j) = dst.at<float>(i, j) / 255;
-        }
-    }
-    dst = res.GammaCorrection(dst);
+    Mat ill = res.Illumination(V, sigma);//ILL FMXY
+    Mat rgb = res.Decomposition(src, ill);
+    Mat Gamma(ill.rows, ill.cols, CV_32FC1);
+    ill.convertTo(Gamma, CV_32FC1, 1.0 / 255);
+    Mat dst = res.GammaCorrection(Gamma);
     dst.convertTo(dst, CV_8UC1, 255);
     Mat hist = res.e_hist(dst);
     Mat output(src.rows, src.cols, CV_32FC3);
     for (int i = 0; i < output.rows; i++) {
         for (int j = 0; j < output.cols; j++) {
 
-            output.at<Vec3f>(i, j)[0] = (Decom.at<Vec3f>(i, j)[0] * hist.at<uchar>(i, j));
-            output.at<Vec3f>(i, j)[1] = (Decom.at<Vec3f>(i, j)[1] * hist.at<uchar>(i, j));
-            output.at<Vec3f>(i, j)[2] = (Decom.at<Vec3f>(i, j)[2] * hist.at<uchar>(i, j));
+            output.at<Vec3f>(i, j)[0] = (rgb.at<Vec3f>(i, j)[0] * hist.at<uchar>(i, j));
+            output.at<Vec3f>(i, j)[1] = (rgb.at<Vec3f>(i, j)[1] * hist.at<uchar>(i, j));
+            output.at<Vec3f>(i, j)[2] = (rgb.at<Vec3f>(i, j)[2] * hist.at<uchar>(i, j));
             //output.at<Vec3b>(i, j)[0] = Decom.at<Vec3f>(i,j)[0]*hist.at<float>(i,j);
         }
     }
     output.convertTo(output, CV_8UC3);
+ 
 
 
 
